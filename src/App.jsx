@@ -7,6 +7,7 @@ import { cities } from './data/cities';
 import { useThemeContext } from './contexts/ThemeContext';
 import { useCitySelection } from './hooks/useCitySelection';
 import { useImageModal } from './hooks/useImageModal';
+import { useReducedMotion } from './hooks/useReducedMotion';
 import { MAP_CONFIG, ANIMATION, TILE_URLS, EXTERNAL_LINKS } from './constants';
 import { ponticIconLight, ponticIconDark } from './components/markers';
 import 'leaflet/dist/leaflet.css';
@@ -32,9 +33,15 @@ function App() {
   const { isDark: darkMode, toggleDarkMode } = useThemeContext();
   const { selectedCity, flyToCoords, showMoreImages, selectCity, clearSelection, toggleMoreImages } = useCitySelection();
   const { isOpen: modalOpen, images: currentImages, currentIndex: currentImageIndex, cityName: currentCityName, currentImage, open: openImageModal, close: closeImageModal, nextImage, prevImage } = useImageModal();
+  const prefersReducedMotion = useReducedMotion();
   
   // Local UI state
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+
+  // Helper: Reduce animation duration if user prefers reduced motion
+  const getAnimationDuration = (baseDuration) => {
+    return prefersReducedMotion ? 0 : baseDuration;
+  };
 
   // Effect: Lock body scroll when modal is open
   useEffect(() => {
@@ -103,7 +110,7 @@ function App() {
             initial={{ x: -300, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
-            transition={{ duration: ANIMATION.SIDEBAR_DURATION, ease: ANIMATION.SIDEBAR_EASING }}
+            transition={{ duration: getAnimationDuration(ANIMATION.SIDEBAR_DURATION), ease: ANIMATION.SIDEBAR_EASING }}
           >
             <div className="sidebar-header">
               <h1>Ιστορικός Χάρτης</h1>
@@ -188,7 +195,7 @@ function App() {
             initial={{ x: 400, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 400, opacity: 0 }}
-            transition={{ duration: ANIMATION.SIDEBAR_DURATION, ease: ANIMATION.SIDEBAR_EASING }}
+            transition={{ duration: getAnimationDuration(ANIMATION.SIDEBAR_DURATION), ease: ANIMATION.SIDEBAR_EASING }}
           >
             <button className="close-button" onClick={handleClose}>×</button>
             <div className="city-details">
@@ -235,7 +242,7 @@ function App() {
                          initial={{ height: 0, opacity: 0 }}
                          animate={{ height: 'auto', opacity: 1 }}
                          exit={{ height: 0, opacity: 0 }}
-                         transition={{ duration: ANIMATION.MORE_IMAGES_GRID_DURATION }}
+                         transition={{ duration: getAnimationDuration(ANIMATION.MORE_IMAGES_GRID_DURATION) }}
                       >
                         {selectedCity.images.slice(2).map((img, index) => (
                           <motion.img
@@ -312,7 +319,7 @@ function App() {
                  alt={`${currentCityName} - enlarged view`}
                  initial={{ scale: 0.8, opacity: 0 }}
                  animate={{ scale: 1, opacity: 1 }}
-                 transition={{ duration: ANIMATION.IMAGE_MODAL_DURATION }}
+                 transition={{ duration: getAnimationDuration(ANIMATION.IMAGE_MODAL_DURATION) }}
               />
               
               {currentImages.length > 1 && (
