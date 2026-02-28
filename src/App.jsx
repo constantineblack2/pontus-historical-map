@@ -8,36 +8,11 @@ import { useThemeContext } from './contexts/ThemeContext';
 import { useCitySelection } from './hooks/useCitySelection';
 import { useImageModal } from './hooks/useImageModal';
 import { MAP_CONFIG, ANIMATION, TILE_URLS, EXTERNAL_LINKS } from './constants';
+import { ponticIconLight, ponticIconDark } from './components/markers';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 
 delete L.Icon.Default.prototype._getIconUrl;
-
-const ponticIcon = new L.DivIcon({
-  className: 'custom-pontic-marker',
-  html: `
-    <div class="marker-container">
-      <div class="marker-dot"></div>
-      <div class="marker-ring"></div>
-    </div>
-  `,
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -40]
-});
-
-const ponticIconDark = new L.DivIcon({
-  className: 'custom-pontic-marker-dark',
-  html: `
-    <div class="marker-container-dark">
-      <div class="marker-dot-dark"></div>
-      <div class="marker-ring-dark"></div>
-    </div>
-  `,
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -40]
-});
 
 function FlyToCity({ coordinates }) {
   const map = useMap();
@@ -184,7 +159,7 @@ function App() {
           <Marker
             key={city.id}
             position={city.coordinates}
-            icon={darkMode ? ponticIconDark : ponticIcon}
+            icon={darkMode ? ponticIconDark : ponticIconLight}
             eventHandlers={{
               click: () => handleMarkerClick(city),
               mouseover: (e) => {
