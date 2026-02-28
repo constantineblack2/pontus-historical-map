@@ -706,12 +706,44 @@ npm run deploy                 # Deploy to GitHub Pages
 
 ## Summary of Changes (Feb 2026)
 
-### State Management Refactoring
+### Phase 1: State Management & Constants Refactoring
 - ✓ Reduced useState calls from 11 → 3 (73% reduction)
 - ✓ Extracted `useTheme`, `useImageModal`, `useCitySelection` hooks
 - ✓ Created `ThemeContext` for global state
 - ✓ Removed `version` state anti-pattern
-- ✓ Improved code organization and maintainability
+- ✓ Centralized constants in `src/constants.js`
+- ✓ Extracted marker icons to `src/components/markers.js`
+- ✓ Organized hooks in `src/hooks/` and contexts in `src/contexts/`
+
+### Phase 2: Component Decomposition (Latest)
+- ✓ Reduced `App.jsx` from 366 lines → 81 lines (78% reduction)
+- ✓ Extracted 7 dedicated UI components:
+  - `MapComponent` (Map, TileLayer, Markers, FlyToCity)
+  - `LeftSidebar` (City list + app title)
+  - `RightSidebar` (City details + image gallery)
+  - `ImageModal` (Lightbox with navigation)
+  - `BottomBar` (Theme toggle + GitHub link)
+  - `MenuButton` (Hamburger menu)
+  - `FlyToCity` (Map animation helper)
+- ✓ Cleaner prop-based component API
+- ✓ Improved testability and reusability
+- ✓ File structure now organized by feature:
+  ```
+  src/components/
+  ├── Map/
+  │   ├── MapComponent.jsx
+  │   └── FlyToCity.jsx
+  ├── Sidebars/
+  │   ├── LeftSidebar.jsx
+  │   └── RightSidebar.jsx
+  ├── ImageModal/
+  │   └── ImageModal.jsx
+  ├── BottomBar/
+  │   └── BottomBar.jsx
+  ├── MenuButton/
+  │   └── MenuButton.jsx
+  └── markers.js
+  ```
 
 ### Performance Optimizations
 - ✓ 45% faster initial page load (500ms → 276ms)
@@ -719,17 +751,11 @@ npm run deploy                 # Deploy to GitHub Pages
 - ✓ Lazy load all images with `loading="lazy"`
 - ✓ Respect `prefers-reduced-motion` for accessibility
 
-### Code Organization
-- ✓ Centralized constants in `src/constants.js`
-- ✓ Extracted marker icons to `src/components/markers.js`
-- ✓ Organized hooks in `src/hooks/`
-- ✓ Organized contexts in `src/contexts/`
-
 ### Testing Infrastructure
-- ✓ Added Playwright E2E test suite (23 tests)
+- ✓ Added Playwright E2E test suite (23 tests passing)
 - ✓ Performance benchmarks for tracking improvements
-- ✓ All tests passing
 - ✓ Linting: 0 errors
+- ✓ Started unit test framework (Vitest configured, tests pending jsdom setup)
 
 ### Git Commits (Performance tracked)
 ```
@@ -746,4 +772,4 @@ f38f8cf perf: lazy load all images with loading='lazy' attribute
 **Project Type:** Educational / Historical Web Application  
 **Maintainer:** Giachasidis Project  
 **License:** MIT  
-**Status:** ✓ Refactored and Optimized
+**Status:** ✓ Refactored, Optimized & Decomposed
