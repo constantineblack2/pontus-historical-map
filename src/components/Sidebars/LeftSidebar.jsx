@@ -4,6 +4,7 @@ import { cities } from '../../data/cities';
 import { useThemeContext } from '../../contexts/ThemeContext';
 import { ANIMATION } from '../../constants';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useFuzzySearch } from '../../hooks/useFuzzySearch';
 
 /**
  * LeftSidebar - Displays city list and app title
@@ -15,6 +16,10 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 function LeftSidebar({ isOpen, selectedCity, onCitySelect }) {
   const { isDark: darkMode } = useThemeContext();
   const prefersReducedMotion = useReducedMotion();
+  const { searchTerm, setSearchTerm, results: filteredCities } = useFuzzySearch(
+    cities,
+    (city) => `${city.name} ${city.region}`
+  );
 
   const getAnimationDuration = (baseDuration) => {
     return prefersReducedMotion ? 0 : baseDuration;
@@ -35,8 +40,24 @@ function LeftSidebar({ isOpen, selectedCity, onCitySelect }) {
             <h1 className="subtitle-main">του Πόντου</h1>
             <p className="subtitle">Επτά σημαντικές πόλεις</p>
           </div>
+          
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Αναζητήστε πόλη..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`city-search ${darkMode ? 'dark' : ''}`}
+            />
+            {searchTerm && (
+              <span className="search-results-count">
+                {filteredCities.length} {filteredCities.length === 1 ? 'αποτέλεσμα' : 'αποτελέσματα'}
+              </span>
+            )}
+          </div>
+
           <div className="city-list">
-            {cities.map((city, index) => (
+            {filteredCities.map((city, index) => (
               <Motion.div
                 key={city.id}
                 className={`city-list-item ${selectedCity?.id === city.id ? 'active' : ''} ${darkMode ? 'dark' : ''}`}
