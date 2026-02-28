@@ -1,8 +1,13 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, AttributionControl } from 'react-leaflet';
 import L from 'leaflet';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { cities } from './data/cities';
+import { useThemeContext } from './contexts/ThemeContext';
+import { useCitySelection } from './hooks/useCitySelection';
+import { useImageModal } from './hooks/useImageModal';
+import { MAP_CONFIG, ANIMATION, TILE_URLS, EXTERNAL_LINKS } from './constants';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 
@@ -38,9 +43,9 @@ function FlyToCity({ coordinates }) {
   const map = useMap();
   React.useEffect(() => {
     if (coordinates) {
-      map.flyTo(coordinates, 10, {
-        duration: 1.5,
-        easeLinearity: 0.25
+      map.flyTo(coordinates, MAP_CONFIG.FLY_TO_ZOOM, {
+        duration: MAP_CONFIG.FLY_TO_DURATION,
+        easeLinearity: MAP_CONFIG.FLY_TO_EASING
       });
     }
   }, [coordinates, map]);
@@ -48,30 +53,15 @@ function FlyToCity({ coordinates }) {
 }
 
 function App() {
-  const [selectedCity, setSelectedCity] = useState(null);
-  const [flyToCoords, setFlyToCoords] = useState(null);
-  const [version, setVersion] = useState(0);
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('pontus-theme');
-    return saved ? JSON.parse(saved) : false;
-  });
-  const [modalOpen, setModalOpen] = useState(false);
-  const [currentImage, setCurrentImage] = useState('');
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [currentImages, setCurrentImages] = useState([]);
-  const [currentCityName, setCurrentCityName] = useState('');
-  const [showMoreImages, setShowMoreImages] = useState(false);
+  // Custom hooks (state management)
+  const { isDark: darkMode, toggleDarkMode } = useThemeContext();
+  const { selectedCity, flyToCoords, showMoreImages, selectCity, clearSelection, toggleMoreImages } = useCitySelection();
+  const { isOpen: modalOpen, images: currentImages, currentIndex: currentImageIndex, cityName: currentCityName, currentImage, open: openImageModal, close: closeImageModal, nextImage, prevImage } = useImageModal();
+  
+  // Local UI state
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
 
-  useEffect(() => {
-    localStorage.setItem('pontus-theme', JSON.stringify(darkMode));
-    if (darkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-  }, [darkMode]);
-
+  // Effect: Lock body scroll when modal is open
   useEffect(() => {
     if (modalOpen) {
       document.body.style.overflow = 'hidden';
@@ -84,60 +74,35 @@ function App() {
     };
   }, [modalOpen]);
 
+  // Handlers using custom hooks
   const handleCitySelect = (city) => {
-    setSelectedCity(city);
-    setFlyToCoords(city.coordinates);
-    setVersion(v => v + 1);
-    setShowMoreImages(false);
+    selectCity(city);
   };
 
   const handleMarkerClick = (city) => {
-    setSelectedCity(city);
-    setVersion(v => v + 1);
-    setShowMoreImages(false);
+    selectCity(city);
   };
 
   const handleClose = () => {
-    setSelectedCity(null);
-    setShowMoreImages(false);
-  };
-
-  const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
+    clearSelection();
   };
 
   const openGitHub = () => {
-    window.open('https://github.com/KaloudasDev/pontus-historical-map', '_blank');
+    window.open(EXTERNAL_LINKS.GITHUB, '_blank');
   };
 
-  const openImageModal = (images, index, cityName) => {
-    setCurrentImages(images);
-    setCurrentImageIndex(index);
-    setCurrentImage(images[index]);
-    setCurrentCityName(cityName);
-    setModalOpen(true);
+  const handleOpenImageModal = (images, index, cityName) => {
+    openImageModal(images, index, cityName);
   };
 
-  const closeImageModal = () => {
-    setModalOpen(false);
-  };
-
-  const nextImage = (e) => {
+  const handleImageNext = (e) => {
     e.stopPropagation();
-    const newIndex = (currentImageIndex + 1) % currentImages.length;
-    setCurrentImageIndex(newIndex);
-    setCurrentImage(currentImages[newIndex]);
+    nextImage();
   };
 
-  const prevImage = (e) => {
+  const handleImagePrev = (e) => {
     e.stopPropagation();
-    const newIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-    setCurrentImageIndex(newIndex);
-    setCurrentImage(currentImages[newIndex]);
-  };
-
-  const toggleMoreImages = () => {
-    setShowMoreImages(prev => !prev);
+    prevImage();
   };
 
   const toggleLeftSidebar = () => {
@@ -163,7 +128,7 @@ function App() {
             initial={{ x: -300, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: ANIMATION.SIDEBAR_DURATION, ease: ANIMATION.SIDEBAR_EASING }}
           >
             <div className="sidebar-header">
               <h1>Ιστορικός Χάρτης</h1>
@@ -177,8 +142,8 @@ function App() {
                   className={`city-list-item ${selectedCity?.id === city.id ? 'active' : ''} ${darkMode ? 'dark' : ''}`}
                   onClick={() => handleCitySelect(city)}
                   initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   transition={{ delay: index * ANIMATION.CITY_LIST_STAGGER_DELAY }}
                   whileHover={{ scale: 1.02, backgroundColor: darkMode ? 'rgba(212, 175, 55, 0.2)' : 'rgba(212, 175, 55, 0.1)' }}
                 >
                   <span className="city-name">{city.name}</span>
@@ -194,11 +159,11 @@ function App() {
       </AnimatePresence>
 
       <MapContainer
-        center={[39.5, 33.0]}
-        zoom={6}
+        center={MAP_CONFIG.CENTER}
+        zoom={MAP_CONFIG.DEFAULT_ZOOM}
         className="map-container"
-        minZoom={7}
-        maxBounds={[[30, 20], [50, 50]]}
+        minZoom={MAP_CONFIG.MIN_ZOOM}
+        maxBounds={MAP_CONFIG.MAX_BOUNDS}
         attributionControl={false}
         zoomControl={false}
         preferCanvas={true}
@@ -208,12 +173,9 @@ function App() {
         <AttributionControl position="bottomright" prefix={false} />
         <TileLayer
           attribution=''
-          url={darkMode 
-            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          }
-          keepBuffer={5}
-          maxNativeZoom={19}
+          url={darkMode ? TILE_URLS.DARK : TILE_URLS.LIGHT}
+          keepBuffer={MAP_CONFIG.ZOOM_BUFFER}
+          maxNativeZoom={MAP_CONFIG.MAX_NATIVE_ZOOM}
         />
         
         <FlyToCity coordinates={flyToCoords} />
@@ -246,12 +208,12 @@ function App() {
       <AnimatePresence mode="wait">
         {selectedCity && (
           <motion.div
-            key={`${selectedCity.id}-${version}`}
+            key={selectedCity.id}
             className={`sidebar right-sidebar ${darkMode ? 'dark' : ''}`}
             initial={{ x: 400, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 400, opacity: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            transition={{ duration: ANIMATION.SIDEBAR_DURATION, ease: ANIMATION.SIDEBAR_EASING }}
           >
             <button className="close-button" onClick={handleClose}>×</button>
             <div className="city-details">
@@ -264,19 +226,20 @@ function App() {
               <div className="city-images">
                 {selectedCity.images.slice(0, 2).map((img, index) => (
                   <motion.img
-                    key={index}
-                    src={img}
-                    alt={`${selectedCity.name} - view ${index + 1}`}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.2 }}
-                    onClick={() => openImageModal(selectedCity.images, index, selectedCity.name)}
-                    style={{ cursor: 'pointer' }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = 'https://via.placeholder.com/300x200?text=Ιστορική+Εικόνα';
-                    }}
-                  />
+                     key={index}
+                     src={img}
+                     loading="lazy"
+                     alt={`${selectedCity.name} - view ${index + 1}`}
+                     initial={{ opacity: 0, scale: 0.9 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     transition={{ delay: index * ANIMATION.IMAGE_STAGGER_DELAY }}
+                     onClick={() => handleOpenImageModal(selectedCity.images, index, selectedCity.name)}
+                     style={{ cursor: 'pointer' }}
+                     onError={(e) => {
+                       e.target.onerror = null;
+                       e.target.src = 'https://via.placeholder.com/300x200?text=Ιστορική+Εικόνα';
+                     }}
+                   />
                 ))}
               </div>
 
@@ -284,7 +247,7 @@ function App() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.25 }}
+                  transition={{ delay: ANIMATION.PANEL_INITIAL_DELAY }}
                 >
                   <button className="more-images-button" onClick={toggleMoreImages}>
                     {showMoreImages ? 'Δείτε λιγότερες εικόνες' : 'Δείτε περισσότερες εικόνες'}
@@ -293,27 +256,28 @@ function App() {
                   <AnimatePresence>
                     {showMoreImages && (
                       <motion.div 
-                        className="more-images-grid"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
+                         className="more-images-grid"
+                         initial={{ height: 0, opacity: 0 }}
+                         animate={{ height: 'auto', opacity: 1 }}
+                         exit={{ height: 0, opacity: 0 }}
+                         transition={{ duration: ANIMATION.MORE_IMAGES_GRID_DURATION }}
                       >
                         {selectedCity.images.slice(2).map((img, index) => (
                           <motion.img
-                            key={index + 2}
-                            src={img}
-                            alt={`${selectedCity.name} - view ${index + 3}`}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1 }}
-                            onClick={() => openImageModal(selectedCity.images, index + 2, selectedCity.name)}
-                            style={{ cursor: 'pointer' }}
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = 'https://via.placeholder.com/300x200?text=Ιστορική+Εικόνα';
-                            }}
-                          />
+                             key={index + 2}
+                             src={img}
+                             loading="lazy"
+                             alt={`${selectedCity.name} - view ${index + 3}`}
+                             initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: index * ANIMATION.MORE_IMAGES_ITEM_DELAY }}
+                             onClick={() => handleOpenImageModal(selectedCity.images, index + 2, selectedCity.name)}
+                             style={{ cursor: 'pointer' }}
+                             onError={(e) => {
+                               e.target.onerror = null;
+                               e.target.src = 'https://via.placeholder.com/300x200?text=Ιστορική+Εικόνα';
+                             }}
+                           />
                         ))}
                       </motion.div>
                     )}
@@ -322,20 +286,20 @@ function App() {
               )}
 
               <motion.div
-                className="city-description"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                 className="city-description"
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: 1 }}
+                 transition={{ delay: ANIMATION.PANEL_DESC_DELAY }}
               >
                 <p className="short-desc">{selectedCity.description}</p>
                 <p className="long-desc">{selectedCity.longDescription}</p>
               </motion.div>
 
               <motion.div
-                className="city-stats"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
+                 className="city-stats"
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: 1 }}
+                 transition={{ delay: ANIMATION.PANEL_STATS_DELAY }}
               >
                 <div className="stat">
                   <span className="stat-label">Πληθυσμός:</span>
@@ -361,18 +325,19 @@ function App() {
               
               {currentImages.length > 1 && (
                 <>
-                  <button className="image-modal-nav image-modal-prev" onClick={prevImage}>‹</button>
-                  <button className="image-modal-nav image-modal-next" onClick={nextImage}>›</button>
-                </>
-              )}
+                   <button className="image-modal-nav image-modal-prev" onClick={handleImagePrev}>‹</button>
+                   <button className="image-modal-nav image-modal-next" onClick={handleImageNext}>›</button>
+                 </>
+                )}
               
               <motion.img 
-                key={currentImage}
-                src={currentImage}
-                alt={`${currentCityName} - enlarged view`}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
+                 key={currentImage}
+                 src={currentImage}
+                 loading="lazy"
+                 alt={`${currentCityName} - enlarged view`}
+                 initial={{ scale: 0.8, opacity: 0 }}
+                 animate={{ scale: 1, opacity: 1 }}
+                 transition={{ duration: ANIMATION.IMAGE_MODAL_DURATION }}
               />
               
               {currentImages.length > 1 && (
@@ -386,10 +351,10 @@ function App() {
       </AnimatePresence>
 
       <motion.div 
-        className="bottom-bar"
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
+         className="bottom-bar"
+         initial={{ y: 100, opacity: 0 }}
+         animate={{ y: 0, opacity: 1 }}
+         transition={{ duration: 0.5, delay: ANIMATION.BOTTOM_BAR_DELAY }}
       >
         <button 
           className="bottom-bar-button theme-toggle-bottom"
