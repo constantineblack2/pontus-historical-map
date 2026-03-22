@@ -12,7 +12,7 @@ import 'leaflet/dist/leaflet.css';
 import './App.css';
 
 delete L.Icon.Default.prototype._getIconUrl;
-
+// lkaskaskljasdlkas
 function App() {
   // Custom hooks (state management)
   const { selectedCity, flyToCoords, showMoreImages, selectCity, clearSelection, toggleMoreImages } = useCitySelection();
