@@ -39,7 +39,7 @@ export const ANIMATION = {
 
 // External Links
 export const EXTERNAL_LINKS = {
-  GITHUB: 'https://github.com/KaloudasDev/pontus-historical-map',
+  GITHUB: 'https://github.com/constantineblack2/pontus-historical-map',
 };
 
 // Storage Keys
