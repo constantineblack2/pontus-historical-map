@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import L from 'leaflet';
 import { useCitySelection } from './hooks/useCitySelection';
 import { useImageModal } from './hooks/useImageModal';
+import { useThemeContext } from './contexts/ThemeContext';
 import MapComponent from './components/Map/MapComponent';
 import LeftSidebar from './components/Sidebars/LeftSidebar';
 import RightSidebar from './components/Sidebars/RightSidebar';
@@ -12,12 +13,13 @@ import 'leaflet/dist/leaflet.css';
 import './App.css';
 
 delete L.Icon.Default.prototype._getIconUrl;
-// lkaskaskljasdlkas
+
 function App() {
   // Custom hooks (state management)
+  const { isDark } = useThemeContext();
   const { selectedCity, flyToCoords, showMoreImages, selectCity, clearSelection, toggleMoreImages } = useCitySelection();
   const { isOpen: modalOpen, images: currentImages, currentIndex: currentImageIndex, cityName: currentCityName, currentImage, open: openImageModal, close: closeImageModal, nextImage, prevImage } = useImageModal();
-  
+
   // Local UI state
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
 
@@ -40,7 +42,7 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app ${isDark ? 'dark' : ''}`}>
       <MenuButton isOpen={leftSidebarOpen} onToggle={toggleLeftSidebar} />
       
       <LeftSidebar 

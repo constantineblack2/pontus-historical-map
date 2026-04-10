@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { cities } from '../../data/cities';
 import { useThemeContext } from '../../contexts/ThemeContext';
@@ -16,10 +16,8 @@ import { useFuzzySearch } from '../../hooks/useFuzzySearch';
 function LeftSidebar({ isOpen, selectedCity, onCitySelect }) {
   const { isDark: darkMode } = useThemeContext();
   const prefersReducedMotion = useReducedMotion();
-  const { searchTerm, setSearchTerm, results: filteredCities } = useFuzzySearch(
-    cities,
-    (city) => `${city.name} ${city.region}`
-  );
+  const getCitySearchText = useCallback((city) => `${city.name} ${city.region}`, []);
+  const { searchTerm, setSearchTerm, results: filteredCities } = useFuzzySearch(cities, getCitySearchText);
 
   const getAnimationDuration = (baseDuration) => {
     return prefersReducedMotion ? 0 : baseDuration;
@@ -65,7 +63,7 @@ function LeftSidebar({ isOpen, selectedCity, onCitySelect }) {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * ANIMATION.CITY_LIST_STAGGER_DELAY }}
-                whileHover={{ scale: 1.02, backgroundColor: darkMode ? 'rgba(212, 175, 55, 0.2)' : 'rgba(212, 175, 55, 0.1)' }}
+                whileHover={{ scale: 1.02 }}
               >
                 <span className="city-name">{city.name}</span>
                 <span className="city-region">{city.region}</span>

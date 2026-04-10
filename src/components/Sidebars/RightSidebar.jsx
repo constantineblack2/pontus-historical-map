@@ -27,8 +27,6 @@ function RightSidebar({
     return prefersReducedMotion ? 0 : baseDuration;
   };
 
-  if (!city) return null;
-
   return (
     <AnimatePresence mode="wait">
       {city && (
